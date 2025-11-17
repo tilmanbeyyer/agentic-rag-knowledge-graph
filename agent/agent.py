@@ -46,7 +46,7 @@ class AgentDependencies:
         if self.search_preferences is None:
             self.search_preferences = {
                 "use_vector": True,
-                "use_graph": True,
+                "use_graph": False,
                 "default_limit": 10
             }
 
@@ -100,82 +100,82 @@ async def vector_search(
     ]
 
 
-@rag_agent.tool
-async def graph_search(
-    ctx: RunContext[AgentDependencies],
-    query: str
-) -> List[Dict[str, Any]]:
-    """
-    Search the knowledge graph for facts and relationships.
+# @rag_agent.tool
+# async def graph_search(
+#     ctx: RunContext[AgentDependencies],
+#     query: str
+# ) -> List[Dict[str, Any]]:
+#     """
+#     Search the knowledge graph for facts and relationships.
     
-    This tool queries the knowledge graph to find specific facts, relationships 
-    between entities, and temporal information. Best for finding specific facts,
-    relationships between companies/people/technologies, and time-based information.
+#     This tool queries the knowledge graph to find specific facts, relationships 
+#     between entities, and temporal information. Best for finding specific facts,
+#     relationships between companies/people/technologies, and time-based information.
     
-    Args:
-        query: Search query to find facts and relationships
+#     Args:
+#         query: Search query to find facts and relationships
     
-    Returns:
-        List of facts with associated episodes and temporal data
-    """
-    input_data = GraphSearchInput(query=query)
+#     Returns:
+#         List of facts with associated episodes and temporal data
+#     """
+#     input_data = GraphSearchInput(query=query)
     
-    results = await graph_search_tool(input_data)
+#     results = await graph_search_tool(input_data)
     
-    # Convert results to dict for agent
-    return [
-        {
-            "fact": r.fact,
-            "uuid": r.uuid,
-            "valid_at": r.valid_at,
-            "invalid_at": r.invalid_at,
-            "source_node_uuid": r.source_node_uuid
-        }
-        for r in results
-    ]
+#     # Convert results to dict for agent
+#     return [
+#         {
+#             "fact": r.fact,
+#             "uuid": r.uuid,
+#             "valid_at": r.valid_at,
+#             "invalid_at": r.invalid_at,
+#             "source_node_uuid": r.source_node_uuid
+#         }
+#         for r in results
+#     ]
 
 
-@rag_agent.tool
-async def hybrid_search(
-    ctx: RunContext[AgentDependencies],
-    query: str,
-    limit: int = 10,
-    text_weight: float = 0.3
-) -> List[Dict[str, Any]]:
-    """
-    Perform both vector and keyword search for comprehensive results.
+# @rag_agent.tool
+# async def hybrid_search(
+#     ctx: RunContext[AgentDependencies],
+#     query: str,
+#     limit: int = 10,
+#     text_weight: float = 0.3
+# ) -> List[Dict[str, Any]]:
+#     """
+#     Perform both vector and keyword search for comprehensive results.
     
-    This tool combines semantic similarity search with keyword matching
-    for the best coverage. It ranks results using both vector similarity
-    and text matching scores. Best for combining semantic and exact matching.
+#     This tool combines semantic similarity search with keyword matching
+#     for the best coverage. It ranks results using both vector similarity
+#     and text matching scores. Best for combining semantic and exact matching.
     
-    Args:
-        query: Search query for hybrid search
-        limit: Maximum number of results to return (1-50)
-        text_weight: Weight for text similarity vs vector similarity (0.0-1.0)
+#     Args:
+#         query: Search query for hybrid search
+#         limit: Maximum number of results to return (1-50)
+#         text_weight: Weight for text similarity vs vector similarity (0.0-1.0)
     
-    Returns:
-        List of chunks ranked by combined relevance score
-    """
-    input_data = HybridSearchInput(
-        query=query,
-        limit=limit,
-        text_weight=text_weight
-    )
+#     Returns:
+#         List of chunks ranked by combined relevance score
+#     """
+#     input_data = HybridSearchInput(
+#         query=query,
+#         limit=limit,
+#         text_weight=text_weight
+#     )
     
-    results = await hybrid_search_tool(input_data)
+#     results = await hybrid_search_tool(input_data)
     
-    # Convert results to dict for agent
-    return [
-        {
-            "content": r.content,
-            "score": r.score,
-            "document_title": r.document_title,
-            "document_source": r.document_source,
-            "chunk_id": r.chunk_id
-        }
-        for r in results
-    ]
+#     # Convert results to dict for agent
+#     return [
+#         {
+#             "content": r.content,
+#             "score": r.score,
+#             "document_title": r.document_title,
+#             "document_source": r.document_source,
+#             "chunk_id": r.chunk_id
+#         }
+#         for r in results
+#     ]
 
 
 @rag_agent.tool
@@ -251,60 +251,60 @@ async def list_documents(
     ]
 
 
-@rag_agent.tool
-async def get_entity_relationships(
-    ctx: RunContext[AgentDependencies],
-    entity_name: str,
-    depth: int = 2
-) -> Dict[str, Any]:
-    """
-    Get all relationships for a specific entity in the knowledge graph.
+# @rag_agent.tool
+# async def get_entity_relationships(
+#     ctx: RunContext[AgentDependencies],
+#     entity_name: str,
+#     depth: int = 2
+# ) -> Dict[str, Any]:
+#     """
+#     Get all relationships for a specific entity in the knowledge graph.
     
-    This tool explores the knowledge graph to find how a specific entity
-    (company, person, technology) relates to other entities. Best for
-    understanding how companies or technologies relate to each other.
+#     This tool explores the knowledge graph to find how a specific entity
+#     (company, person, technology) relates to other entities. Best for
+#     understanding how companies or technologies relate to each other.
     
-    Args:
-        entity_name: Name of the entity to explore (e.g., "Google", "OpenAI")
-        depth: Maximum traversal depth for relationships (1-5)
+#     Args:
+#         entity_name: Name of the entity to explore (e.g., "Google", "OpenAI")
+#         depth: Maximum traversal depth for relationships (1-5)
     
-    Returns:
-        Entity relationships and connected entities with relationship types
-    """
-    input_data = EntityRelationshipInput(
-        entity_name=entity_name,
-        depth=depth
-    )
+#     Returns:
+#         Entity relationships and connected entities with relationship types
+#     """
+#     input_data = EntityRelationshipInput(
+#         entity_name=entity_name,
+#         depth=depth
+#     )
     
-    return await get_entity_relationships_tool(input_data)
+#     return await get_entity_relationships_tool(input_data)
 
 
-@rag_agent.tool
-async def get_entity_timeline(
-    ctx: RunContext[AgentDependencies],
-    entity_name: str,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None
-) -> List[Dict[str, Any]]:
-    """
-    Get the timeline of facts for a specific entity.
+# @rag_agent.tool
+# async def get_entity_timeline(
+#     ctx: RunContext[AgentDependencies],
+#     entity_name: str,
+#     start_date: Optional[str] = None,
+#     end_date: Optional[str] = None
+# ) -> List[Dict[str, Any]]:
+#     """
+#     Get the timeline of facts for a specific entity.
     
-    This tool retrieves chronological information about an entity,
-    showing how information has evolved over time. Best for understanding
-    how information about an entity has developed or changed.
+#     This tool retrieves chronological information about an entity,
+#     showing how information has evolved over time. Best for understanding
+#     how information about an entity has developed or changed.
     
-    Args:
-        entity_name: Name of the entity (e.g., "Microsoft", "AI")
-        start_date: Start date in ISO format (YYYY-MM-DD), optional
-        end_date: End date in ISO format (YYYY-MM-DD), optional
+#     Args:
+#         entity_name: Name of the entity (e.g., "Microsoft", "AI")
+#         start_date: Start date in ISO format (YYYY-MM-DD), optional
+#         end_date: End date in ISO format (YYYY-MM-DD), optional
     
-    Returns:
-        Chronological list of facts about the entity with timestamps
-    """
-    input_data = EntityTimelineInput(
-        entity_name=entity_name,
-        start_date=start_date,
-        end_date=end_date
-    )
+#     Returns:
+#         Chronological list of facts about the entity with timestamps
+#     """
+#     input_data = EntityTimelineInput(
+#         entity_name=entity_name,
+#         start_date=start_date,
+#         end_date=end_date
+#     )
     
-    return await get_entity_timeline_tool(input_data)
+#     return await get_entity_timeline_tool(input_data)

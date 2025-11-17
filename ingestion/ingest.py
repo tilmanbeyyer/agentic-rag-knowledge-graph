@@ -83,8 +83,8 @@ class DocumentIngestionPipeline:
         
         # Initialize database connections
         await initialize_database()
-        await initialize_graph()
-        await self.graph_builder.initialize()
+        # await initialize_graph()
+        # await self.graph_builder.initialize()
         
         self._initialized = True
         logger.info("Ingestion pipeline initialized")
@@ -398,8 +398,8 @@ class DocumentIngestionPipeline:
         logger.info("Cleaned PostgreSQL database")
         
         # Clean knowledge graph
-        await self.graph_builder.clear_graph()
-        logger.info("Cleaned knowledge graph")
+        # await self.graph_builder.clear_graph()
+        # logger.info("Cleaned knowledge graph")
 
 
 async def main():

@@ -84,17 +84,17 @@ async def lifespan(app: FastAPI):
         logger.info("Database initialized")
         
         # Initialize graph database
-        await initialize_graph()
-        logger.info("Graph database initialized")
+        # await initialize_graph()
+        # logger.info("Graph database initialized")
         
         # Test connections
         db_ok = await test_connection()
-        graph_ok = await test_graph_connection()
+        # graph_ok = await test_graph_connection()
         
         if not db_ok:
             logger.error("Database connection failed")
-        if not graph_ok:
-            logger.error("Graph database connection failed")
+        # if not graph_ok:
+        #     logger.error("Graph database connection failed")
         
         logger.info("Agentic RAG API startup complete")
         
@@ -361,20 +361,22 @@ async def health_check():
     try:
         # Test database connections
         db_status = await test_connection()
-        graph_status = await test_graph_connection()
+        # graph_status = await test_graph_connection()
         
         # Determine overall status
-        if db_status and graph_status:
+        if db_status:
             status = "healthy"
-        elif db_status or graph_status:
-            status = "degraded"
-        else:
-            status = "unhealthy"
+        # if db_status and graph_status:
+        #     status = "healthy"
+        # elif db_status or graph_status:
+        #     status = "degraded"
+        # else:
+        #     status = "unhealthy"
         
         return HealthStatus(
             status=status,
             database=db_status,
-            graph_database=graph_status,
+            graph_database=True,
             llm_connection=True,  # Assume OK if we can respond
             version="0.1.0",
             timestamp=datetime.now()
