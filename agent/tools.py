@@ -23,6 +23,7 @@ from .graph_utils import (
     get_entity_relationships,
     graph_client
 )
+from .bm25_utils import bm25_search, hybrid_bm25_vector_search
 from .models import ChunkResult, GraphSearchResult, DocumentMetadata
 from .providers import get_embedding_client, get_embedding_model
 
@@ -74,6 +75,12 @@ class HybridSearchInput(BaseModel):
     query: str = Field(..., description="Search query")
     limit: int = Field(default=10, description="Maximum number of results")
     text_weight: float = Field(default=0.3, description="Weight for text similarity (0-1)")
+
+
+class BM25SearchInput(BaseModel):
+    """Input for BM25 lexical search tool."""
+    query: str = Field(..., description="Search query")
+    limit: int = Field(default=10, description="Maximum number of results")
 
 
 class DocumentInput(BaseModel):
@@ -172,28 +179,73 @@ async def graph_search_tool(input_data: GraphSearchInput) -> List[GraphSearchRes
         return []
 
 
-async def hybrid_search_tool(input_data: HybridSearchInput) -> List[ChunkResult]:
+async def bm25_search_tool(input_data: BM25SearchInput) -> List[ChunkResult]:
     """
-    Perform hybrid search (vector + keyword).
-    
+    Perform BM25 lexical search for keyword-based retrieval.
+
     Args:
         input_data: Search parameters
-    
+
     Returns:
         List of matching chunks
     """
     try:
+        # Perform BM25 search
+        results = await bm25_search(
+            query=input_data.query,
+            limit=input_data.limit
+        )
+
+        # Convert to ChunkResult models
+        return [
+            ChunkResult(
+                chunk_id=str(r["chunk_id"]),
+                document_id=str(r["document_id"]),
+                content=r["content"],
+                score=r["score"],
+                metadata=r["metadata"],
+                document_title=r["document_title"],
+                document_source=r["document_source"]
+            )
+            for r in results
+        ]
+
+    except Exception as e:
+        logger.error(f"BM25 search failed: {e}")
+        return []
+
+
+async def hybrid_search_tool(input_data: HybridSearchInput) -> List[ChunkResult]:
+    """
+    Perform hybrid search combining vector similarity and BM25 lexical search.
+
+    This provides the best of both worlds: semantic understanding from embeddings
+    and exact keyword matching from BM25.
+
+    Args:
+        input_data: Search parameters
+
+    Returns:
+        List of matching chunks with combined scores
+    """
+    try:
         # Generate embedding for the query
         embedding = await generate_embedding(input_data.query)
-        
-        # Perform hybrid search
-        results = await hybrid_search(
+
+        # Perform vector search
+        vector_results = await vector_search(
             embedding=embedding,
-            query_text=input_data.query,
-            limit=input_data.limit,
-            text_weight=input_data.text_weight
+            limit=input_data.limit * 2  # Get more for better combination
         )
-        
+
+        # Perform hybrid search with BM25
+        results = await hybrid_bm25_vector_search(
+            query=input_data.query,
+            vector_results=vector_results,
+            bm25_weight=input_data.text_weight,
+            limit=input_data.limit
+        )
+
         # Convert to ChunkResult models
         return [
             ChunkResult(
@@ -207,7 +259,7 @@ async def hybrid_search_tool(input_data: HybridSearchInput) -> List[ChunkResult]
             )
             for r in results
         ]
-        
+
     except Exception as e:
         logger.error(f"Hybrid search failed: {e}")
         return []

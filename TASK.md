@@ -295,14 +295,41 @@ This document tracks all tasks for building the agentic RAG system with knowledg
 
 ---
 
+## Phase 8: BM25 Lexical Search Integration
+
+### BM25S Library Integration (Added 2025-11-17)
+- [X] Install bm25s library and dependencies (scipy)
+- [X] Create agent/bm25_utils.py module for BM25 indexing and search
+- [X] Add BM25Index class with build, save, load, and search methods
+- [X] Add BM25 search tool to agent/tools.py
+- [X] Register bm25_search tool with the agent in agent/agent.py
+- [X] Update hybrid_search_tool to use BM25 instead of PostgreSQL ts_rank
+- [X] Update system prompt to mention BM25 and hybrid search capabilities
+- [X] Uncomment and activate hybrid_search tool in agent
+- [X] Write comprehensive tests for BM25 functionality
+- [X] Update requirements.txt with bm25s==0.2.14 and scipy==1.16.3
+
+### BM25 Features
+- **BM25 Lexical Search**: Keyword-based search using BM25 algorithm for exact term matching
+- **Hybrid Search**: Combines vector embeddings and BM25 scores with weighted ranking
+- **Index Persistence**: Automatic saving/loading of BM25 index to disk
+- **Database Integration**: Builds index from existing PostgreSQL chunks
+- **Three Search Modes**:
+  1. Vector search (semantic similarity)
+  2. BM25 search (keyword matching)
+  3. Hybrid search (best of both worlds)
+
+---
+
 ## Project Status
 
 ✅ **All core functionality completed and tested**
-✅ **58/58 tests passing**
+✅ **58/58 tests passing (+ new BM25 tests)**
 ✅ **Production ready**
 ✅ **Comprehensive documentation**
 ✅ **Flexible provider system implemented**
 ✅ **CLI with agent transparency features**
 ✅ **Graphiti integration with OpenAI-compatible clients**
+✅ **BM25 lexical search integrated for improved retrieval**
 
 The agentic RAG with knowledge graph system is complete and ready for production use.

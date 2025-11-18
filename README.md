@@ -1,3 +1,8 @@
+PROMPT:
+We want to add https://github.com/xhluca/bm25s to our search agent @agent/agent.py and @agent/prompts.py to make our rag search 
+better. Please use the bm25s to search the documents. I do not know what works best using the existing database or create a new 
+resembles of the document in the documents folder. Make sure to activate the venv venv/bin/activate before using any python commands.
+
 # Agentic RAG with Knowledge Graph
 
 Agentic knowledge retrieval redefined with an AI agent system that combines traditional RAG (vector search) with knowledge graph capabilities to analyze and provide insights about big tech companies and their AI initiatives. The system uses PostgreSQL with pgvector for semantic search and Neo4j with Graphiti for temporal knowledge graphs. The goal is to create Agentic RAG at its finest.
@@ -42,6 +47,8 @@ venv\Scripts\activate     # On Windows
 
 ```bash
 pip install -r requirements.txt
+
+# Note: This now includes bm25s for lexical search capabilities
 ```
 
 ### 3. Set up required tables in Postgres
@@ -164,14 +171,29 @@ The ingestion process will:
 
 NOTE that this can take a while because knowledge graphs are very computationally expensive!
 
-### 3. Configure Agent Behavior (Optional)
+### 3. Build BM25 Index for Lexical Search
+
+After running ingestion, build the BM25 index to enable keyword-based and hybrid search:
+
+```bash
+# Build BM25 index from database chunks
+python build_bm25_index.py
+```
+
+The BM25 index enables:
+- **BM25 Search**: Fast keyword-based lexical search for exact term matching
+- **Hybrid Search**: Combines semantic (vector) and lexical (BM25) search for best results
+
+The index is automatically saved to `data/bm25_index/` and will be loaded by the agent when needed.
+
+### 4. Configure Agent Behavior (Optional)
 
 Before running the API server, you can customize when the agent uses different tools by modifying the system prompt in `agent/prompts.py`. The system prompt controls:
 - When to use vector search vs knowledge graph search
 - How to combine results from different sources
 - The agent's reasoning strategy for tool selection
 
-### 4. Start the API Server (Terminal 1)
+### 5. Start the API Server (Terminal 1)
 
 ```bash
 # Start the FastAPI server
@@ -180,7 +202,7 @@ python -m agent.api
 # Server will be available at http://localhost:8058
 ```
 
-### 5. Use the Command Line Interface (Terminal 2)
+### 6. Use the Command Line Interface (Terminal 2)
 
 The CLI provides an interactive way to chat with the agent and see which tools it uses for each query.
 
@@ -240,7 +262,7 @@ Microsoft has a significant strategic partnership with OpenAI...
 - `clear` - Clear current session
 - `exit` or `quit` - Exit the CLI
 
-### 6. Test the System
+### 7. Test the System
 
 #### Health Check
 ```bash
@@ -276,6 +298,16 @@ This system combines the best of both worlds:
 - Fast retrieval of contextually relevant information
 - Excellent for finding documents about similar topics
 
+**BM25 Lexical Search**:
+- Traditional keyword-based ranking using BM25 algorithm
+- Excellent for exact term matches and technical terminology
+- Complements semantic search with lexical precision
+
+**Hybrid Search**:
+- Combines vector similarity and BM25 scores with weighted ranking
+- Provides the best of both semantic understanding and keyword matching
+- Configurable weights to tune relevance
+
 **Knowledge Graph (Neo4j + Graphiti)**:
 - Temporal relationships between entities (companies, people, technologies)
 - Graph traversal for discovering connections
@@ -290,8 +322,14 @@ This system combines the best of both worlds:
 
 The system excels at queries that benefit from both semantic search and relationship understanding:
 
-- **Semantic Questions**: "What AI research is Google working on?" 
+- **Semantic Questions**: "What AI research is Google working on?"
   - Uses vector search to find relevant document chunks about Google's AI research
+
+- **Keyword Questions**: "Find mentions of 'Grobkonzept' or 'SAP Process'"
+  - Uses BM25 search for exact keyword matches and technical terminology
+
+- **Hybrid Questions**: "What are the key SAP processes in the energy sector?"
+  - Uses hybrid search combining semantic understanding with keyword precision
 
 - **Relationship Questions**: "How are Microsoft and OpenAI connected?"
   - Uses knowledge graph to traverse relationships and partnerships
@@ -318,7 +356,10 @@ Visit http://localhost:8058/docs for interactive API documentation once the serv
 
 ## Key Features
 
-- **Hybrid Search**: Seamlessly combines vector similarity and graph traversal
+- **Triple Search Strategy**:
+  - Vector search for semantic similarity
+  - BM25 search for keyword matching
+  - Hybrid search combining both approaches
 - **Temporal Knowledge**: Tracks how information changes over time
 - **Streaming Responses**: Real-time AI responses with Server-Sent Events
 - **Flexible Providers**: Support for multiple LLM and embedding providers

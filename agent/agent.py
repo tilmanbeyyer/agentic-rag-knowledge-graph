@@ -16,6 +16,7 @@ from .tools import (
     vector_search_tool,
     graph_search_tool,
     hybrid_search_tool,
+    bm25_search_tool,
     get_document_tool,
     list_documents_tool,
     get_entity_relationships_tool,
@@ -23,6 +24,7 @@ from .tools import (
     VectorSearchInput,
     GraphSearchInput,
     HybridSearchInput,
+    BM25SearchInput,
     DocumentInput,
     DocumentListInput,
     EntityRelationshipInput,
@@ -68,15 +70,15 @@ async def vector_search(
 ) -> List[Dict[str, Any]]:
     """
     Search for relevant information using semantic similarity.
-    
+
     This tool performs vector similarity search across document chunks
     to find semantically related content. Returns the most relevant results
     regardless of similarity score.
-    
+
     Args:
         query: Search query to find similar content
         limit: Maximum number of results to return (1-50)
-    
+
     Returns:
         List of matching chunks ordered by similarity (best first)
     """
@@ -84,9 +86,49 @@ async def vector_search(
         query=query,
         limit=limit
     )
-    
+
     results = await vector_search_tool(input_data)
-    
+
+    # Convert results to dict for agent
+    return [
+        {
+            "content": r.content,
+            "score": r.score,
+            "document_title": r.document_title,
+            "document_source": r.document_source,
+            "chunk_id": r.chunk_id
+        }
+        for r in results
+    ]
+
+
+@rag_agent.tool
+async def bm25_search(
+    ctx: RunContext[AgentDependencies],
+    query: str,
+    limit: int = 10
+) -> List[Dict[str, Any]]:
+    """
+    Search using BM25 lexical/keyword-based ranking.
+
+    This tool performs BM25 search which is excellent for exact keyword matches
+    and term frequency based retrieval. Best for queries with specific terminology,
+    technical terms, or when you need traditional keyword search alongside semantic search.
+
+    Args:
+        query: Search query with keywords to match
+        limit: Maximum number of results to return (1-50)
+
+    Returns:
+        List of matching chunks ordered by BM25 score (best first)
+    """
+    input_data = BM25SearchInput(
+        query=query,
+        limit=limit
+    )
+
+    results = await bm25_search_tool(input_data)
+
     # Convert results to dict for agent
     return [
         {
@@ -135,47 +177,48 @@ async def vector_search(
 #     ]
 
 
-# @rag_agent.tool
-# async def hybrid_search(
-#     ctx: RunContext[AgentDependencies],
-#     query: str,
-#     limit: int = 10,
-#     text_weight: float = 0.3
-# ) -> List[Dict[str, Any]]:
-#     """
-#     Perform both vector and keyword search for comprehensive results.
-    
-#     This tool combines semantic similarity search with keyword matching
-#     for the best coverage. It ranks results using both vector similarity
-#     and text matching scores. Best for combining semantic and exact matching.
-    
-#     Args:
-#         query: Search query for hybrid search
-#         limit: Maximum number of results to return (1-50)
-#         text_weight: Weight for text similarity vs vector similarity (0.0-1.0)
-    
-#     Returns:
-#         List of chunks ranked by combined relevance score
-#     """
-#     input_data = HybridSearchInput(
-#         query=query,
-#         limit=limit,
-#         text_weight=text_weight
-#     )
-    
-#     results = await hybrid_search_tool(input_data)
-    
-#     # Convert results to dict for agent
-#     return [
-#         {
-#             "content": r.content,
-#             "score": r.score,
-#             "document_title": r.document_title,
-#             "document_source": r.document_source,
-#             "chunk_id": r.chunk_id
-#         }
-#         for r in results
-#     ]
+@rag_agent.tool
+async def hybrid_search(
+    ctx: RunContext[AgentDependencies],
+    query: str,
+    limit: int = 10,
+    text_weight: float = 0.3
+) -> List[Dict[str, Any]]:
+    """
+    Perform hybrid search combining semantic vector and BM25 lexical search.
+
+    This tool combines semantic similarity search (embeddings) with BM25 keyword matching
+    for comprehensive results. It ranks results using both approaches and provides
+    the best coverage. Best for queries that benefit from both semantic understanding
+    and exact keyword matching.
+
+    Args:
+        query: Search query for hybrid search
+        limit: Maximum number of results to return (1-50)
+        text_weight: Weight for BM25 vs vector similarity (0.0-1.0, default 0.3)
+
+    Returns:
+        List of chunks ranked by combined relevance score
+    """
+    input_data = HybridSearchInput(
+        query=query,
+        limit=limit,
+        text_weight=text_weight
+    )
+
+    results = await hybrid_search_tool(input_data)
+
+    # Convert results to dict for agent
+    return [
+        {
+            "content": r.content,
+            "score": r.score,
+            "document_title": r.document_title,
+            "document_source": r.document_source,
+            "chunk_id": r.chunk_id
+        }
+        for r in results
+    ]
 
 
 @rag_agent.tool
