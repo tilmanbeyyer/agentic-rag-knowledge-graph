@@ -7,7 +7,6 @@ import logging
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import asyncio
-from langfuse import observe
 
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
@@ -109,7 +108,6 @@ class EntityTimelineInput(BaseModel):
 
 
 # Tool Implementation Functions
-@observe()
 async def vector_search_tool(input_data: VectorSearchInput) -> List[ChunkResult]:
     """
     Perform vector similarity search.

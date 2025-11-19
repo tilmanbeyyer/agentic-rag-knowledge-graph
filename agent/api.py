@@ -329,7 +329,7 @@ async def execute_agent(
         # Run the agent
         result = await rag_agent.run(full_prompt, deps=deps)
         
-        response = result.data
+        response = result.output
         tools_used = extract_tool_calls(result)
         
         # Save conversation if requested
@@ -395,7 +395,6 @@ async def health_check():
 
 
 @app.post("/chat", response_model=ChatResponse)
-@observe()
 async def chat(request: ChatRequest):
     """Non-streaming chat endpoint."""
     try:
