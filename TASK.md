@@ -375,3 +375,30 @@ The agentic RAG with knowledge graph system is complete and ready for production
 - [X] Update DATABASE_URL examples in .env.example to use port 5433
 - [X] Update DATABASE_URL examples in PLANNING.md to use port 5433
 - [X] Update DATABASE_URL examples in README.md to use port 5433 (no hardcoded port found)
+
+---
+
+## Bug Fixes
+
+### BM25 Search Error When Limit Exceeds Corpus Size (Added 2025-11-19)
+- [X] Fix BM25 search to clamp limit parameter to corpus size
+- [X] Add empty corpus check before searching
+- [X] Add debug logging when limit is clamped
+- [X] Add test for search when limit exceeds corpus size
+- [X] Add test for search with empty corpus
+- [X] Verify all BM25 tests pass (12/12 tests passing)
+
+**Issue**: BM25 search failed with error "k of 10 is larger than the number of available scores" when requesting more results than exist in corpus.
+
+**Solution**: Modified `agent/bm25_utils.py` to clamp the `limit` parameter to `min(limit, len(corpus_data))` before calling `retriever.retrieve()`, preventing the error and gracefully handling small or empty corpora.
+
+### BM25 Metadata JSON Parsing Error (Added 2025-11-19)
+- [X] Import json module in bm25_utils.py
+- [X] Add JSON parsing for metadata when building BM25 index
+- [X] Add error handling for malformed JSON metadata
+- [X] Rebuild BM25 index with 445 chunks successfully
+- [X] Verify all BM25 tests pass (12/12 tests passing)
+
+**Issue**: BM25 search failed with Pydantic validation error: "Input should be a valid dictionary [type=dict_type]" for the `metadata` field. PostgreSQL JSONB field was being stored as a JSON string in the BM25 index, but `ChunkResult` model expects a dictionary.
+
+**Solution**: Modified `agent/bm25_utils.py` to parse metadata JSON strings to dictionaries when building the index (line ~102-108), matching the behavior in `agent/db_utils.py`. Added safe parsing with error handling to gracefully handle malformed JSON by using an empty dict fallback.

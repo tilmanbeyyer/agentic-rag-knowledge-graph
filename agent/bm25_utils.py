@@ -8,6 +8,7 @@ the semantic vector search in the RAG system.
 import os
 import logging
 import pickle
+import json
 from typing import List, Dict, Any, Optional, Tuple
 from pathlib import Path
 
@@ -95,12 +96,23 @@ class BM25Index:
 
             for row in results:
                 corpus_texts.append(row["content"])
+
+                # Parse metadata JSON string to dict (like db_utils.py does)
+                # Reason: PostgreSQL JSONB returns as string, but ChunkResult expects dict
+                metadata = row["metadata"]
+                if isinstance(metadata, str):
+                    try:
+                        metadata = json.loads(metadata)
+                    except (json.JSONDecodeError, TypeError):
+                        logger.warning(f"Failed to parse metadata for chunk {row['chunk_id']}, using empty dict")
+                        metadata = {}
+
                 self.corpus_data.append({
                     "chunk_id": row["chunk_id"],
                     "document_id": row["document_id"],
                     "content": row["content"],
                     "chunk_index": row["chunk_index"],
-                    "metadata": row["metadata"],
+                    "metadata": metadata,
                     "document_title": row["document_title"],
                     "document_source": row["document_source"]
                 })
@@ -192,14 +204,28 @@ class BM25Index:
                 logger.error("BM25 index not available")
                 return []
 
+        # Handle empty corpus
+        if not self.corpus_data:
+            logger.warning("BM25 corpus is empty")
+            return []
+
         try:
+            # Clamp limit to corpus size to avoid bm25s errors
+            # Reason: bm25s raises an error if k > corpus size
+            actual_limit = min(limit, len(self.corpus_data))
+            if actual_limit < limit:
+                logger.debug(
+                    f"Clamped BM25 search limit from {limit} to {actual_limit} "
+                    f"(corpus size: {len(self.corpus_data)})"
+                )
+
             # Tokenize query
             query_tokens = bm25s.tokenize(query, stopwords="en")
 
             # Search
             results, scores = self.retriever.retrieve(
                 query_tokens,
-                k=limit
+                k=actual_limit
             )
 
             # Format results

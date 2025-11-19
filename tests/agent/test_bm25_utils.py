@@ -312,3 +312,40 @@ async def test_search_error_handling(bm25_index, mock_db_pool):
     # Build should fail gracefully
     result = await bm25_index.build_index(force_rebuild=True)
     assert result is False
+
+
+@pytest.mark.asyncio
+async def test_search_limit_exceeds_corpus_size(bm25_index, mock_db_pool, sample_chunks):
+    """Test search when requested limit exceeds corpus size."""
+    # Use only 1 chunk to simulate small corpus
+    single_chunk = [sample_chunks[0]]
+    mock_records = [create_mock_record(single_chunk[0])]
+    mock_db_pool.fetch.return_value = mock_records
+
+    # Build index with just one chunk
+    await bm25_index.build_index(force_rebuild=True)
+
+    # Request 10 results when only 1 exists
+    results = await bm25_index.search("Python programming", limit=10)
+
+    # Should return 1 result without error
+    assert len(results) == 1
+    assert results[0]["chunk_id"] == "chunk-1"
+    assert "score" in results[0]
+
+
+@pytest.mark.asyncio
+async def test_search_with_empty_corpus(bm25_index, mock_db_pool):
+    """Test search with empty corpus."""
+    # Build index with empty corpus
+    mock_db_pool.fetch.return_value = []
+    await bm25_index.build_index(force_rebuild=True)
+
+    # Manually set empty corpus_data (since build returns False for empty corpus)
+    bm25_index.corpus_data = []
+    bm25_index.retriever = MagicMock()
+
+    # Search should return empty list gracefully
+    results = await bm25_index.search("test query", limit=10)
+
+    assert results == []
