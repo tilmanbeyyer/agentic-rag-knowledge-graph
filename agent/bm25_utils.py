@@ -169,7 +169,7 @@ class BM25Index:
     async def search(
         self,
         query: str,
-        limit: int = 10
+        limit: int = 1
     ) -> List[Dict[str, Any]]:
         """
         Search using BM25 algorithm.

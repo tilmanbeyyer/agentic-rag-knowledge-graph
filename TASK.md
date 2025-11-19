@@ -321,15 +321,57 @@ This document tracks all tasks for building the agentic RAG system with knowledg
 
 ---
 
+## Phase 9: Langfuse Observability Integration
+
+### Infrastructure Setup (Added 2025-11-19)
+- [X] Add Langfuse services to docker-compose.yml (langfuse-db, langfuse-web, langfuse-worker)
+- [X] Configure environment variables in .env.example for Langfuse
+- [X] Add langfuse to requirements.txt
+- [X] Create agent/config.py for centralized configuration management
+
+### Simplified Integration (Pydantic AI Native)
+- [X] Add `Agent.instrument_all()` to agent/agent.py for automatic tracing
+- [X] Add `@observe()` decorator to chat endpoint in agent/api.py
+- [X] Use `propagate_attributes()` for session/user tracking
+- [X] Remove over-engineered custom observability module
+- [X] Simplify to follow official Pydantic AI + Langfuse pattern
+
+### Testing & Documentation
+- [X] Create tests/test_observability.py with basic integration tests
+- [X] Update README.md with simplified Langfuse setup instructions
+- [X] Update PLANNING.md with observability architecture section
+- [X] Document automatic tracing approach
+
+### Langfuse Features (Automatic via Pydantic AI)
+- **Zero-Config Tracing**: Automatic tracking of all agent interactions
+- **Self-Hosted**: Runs in Docker containers with dedicated PostgreSQL database
+- **Session Tracking**: Uses `@observe()` decorator for session correlation
+- **Tool Call Tracking**: Automatically captures all tool invocations
+- **Token Usage**: Monitors LLM consumption automatically
+- **Simple Setup**: Just environment variables - no custom code needed
+
+---
+
 ## Project Status
 
 ✅ **All core functionality completed and tested**
-✅ **58/58 tests passing (+ new BM25 tests)**
+✅ **58/58 tests passing (+ new BM25 and observability tests)**
 ✅ **Production ready**
 ✅ **Comprehensive documentation**
 ✅ **Flexible provider system implemented**
 ✅ **CLI with agent transparency features**
 ✅ **Graphiti integration with OpenAI-compatible clients**
 ✅ **BM25 lexical search integrated for improved retrieval**
+✅ **Langfuse observability for comprehensive tracing and monitoring**
 
-The agentic RAG with knowledge graph system is complete and ready for production use.
+The agentic RAG with knowledge graph system is complete and ready for production use with full observability.
+
+---
+
+## Phase 10: Database Configuration Updates
+
+### PostgreSQL Port Change (Added 2025-11-19)
+- [X] Change PostgreSQL port from 5432 to 5433 in docker-compose.yml
+- [X] Update DATABASE_URL examples in .env.example to use port 5433
+- [X] Update DATABASE_URL examples in PLANNING.md to use port 5433
+- [X] Update DATABASE_URL examples in README.md to use port 5433 (no hardcoded port found)

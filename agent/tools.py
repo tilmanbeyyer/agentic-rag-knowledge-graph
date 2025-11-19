@@ -7,13 +7,14 @@ import logging
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import asyncio
+from langfuse import observe
 
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
 from .db_utils import (
     vector_search,
-    hybrid_search,
+    # hybrid_search,
     get_document,
     list_documents,
     get_document_chunks
@@ -108,6 +109,7 @@ class EntityTimelineInput(BaseModel):
 
 
 # Tool Implementation Functions
+@observe()
 async def vector_search_tool(input_data: VectorSearchInput) -> List[ChunkResult]:
     """
     Perform vector similarity search.
@@ -215,54 +217,54 @@ async def bm25_search_tool(input_data: BM25SearchInput) -> List[ChunkResult]:
         return []
 
 
-async def hybrid_search_tool(input_data: HybridSearchInput) -> List[ChunkResult]:
-    """
-    Perform hybrid search combining vector similarity and BM25 lexical search.
+# async def hybrid_search_tool(input_data: HybridSearchInput) -> List[ChunkResult]:
+#     """
+#     Perform hybrid search combining vector similarity and BM25 lexical search.
 
-    This provides the best of both worlds: semantic understanding from embeddings
-    and exact keyword matching from BM25.
+#     This provides the best of both worlds: semantic understanding from embeddings
+#     and exact keyword matching from BM25.
 
-    Args:
-        input_data: Search parameters
+#     Args:
+#         input_data: Search parameters
 
-    Returns:
-        List of matching chunks with combined scores
-    """
-    try:
-        # Generate embedding for the query
-        embedding = await generate_embedding(input_data.query)
+#     Returns:
+#         List of matching chunks with combined scores
+#     """
+#     try:
+#         # Generate embedding for the query
+#         embedding = await generate_embedding(input_data.query)
 
-        # Perform vector search
-        vector_results = await vector_search(
-            embedding=embedding,
-            limit=input_data.limit * 2  # Get more for better combination
-        )
+#         # Perform vector search
+#         vector_results = await vector_search(
+#             embedding=embedding,
+#             limit=input_data.limit * 2  # Get more for better combination
+#         )
 
-        # Perform hybrid search with BM25
-        results = await hybrid_bm25_vector_search(
-            query=input_data.query,
-            vector_results=vector_results,
-            bm25_weight=input_data.text_weight,
-            limit=input_data.limit
-        )
+#         # Perform hybrid search with BM25
+#         results = await hybrid_bm25_vector_search(
+#             query=input_data.query,
+#             vector_results=vector_results,
+#             bm25_weight=input_data.text_weight,
+#             limit=input_data.limit
+#         )
 
-        # Convert to ChunkResult models
-        return [
-            ChunkResult(
-                chunk_id=str(r["chunk_id"]),
-                document_id=str(r["document_id"]),
-                content=r["content"],
-                score=r["combined_score"],
-                metadata=r["metadata"],
-                document_title=r["document_title"],
-                document_source=r["document_source"]
-            )
-            for r in results
-        ]
+#         # Convert to ChunkResult models
+#         return [
+#             ChunkResult(
+#                 chunk_id=str(r["chunk_id"]),
+#                 document_id=str(r["document_id"]),
+#                 content=r["content"],
+#                 score=r["combined_score"],
+#                 metadata=r["metadata"],
+#                 document_title=r["document_title"],
+#                 document_source=r["document_source"]
+#             )
+#             for r in results
+#         ]
 
-    except Exception as e:
-        logger.error(f"Hybrid search failed: {e}")
-        return []
+#     except Exception as e:
+#         logger.error(f"Hybrid search failed: {e}")
+#         return []
 
 
 async def get_document_tool(input_data: DocumentInput) -> Optional[Dict[str, Any]]:

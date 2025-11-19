@@ -2,7 +2,6 @@
 Main Pydantic AI agent for agentic RAG with knowledge graph.
 """
 
-import os
 import logging
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
@@ -14,27 +13,24 @@ from .prompts import SYSTEM_PROMPT
 from .providers import get_llm_model
 from .tools import (
     vector_search_tool,
-    graph_search_tool,
-    hybrid_search_tool,
+    # hybrid_search_tool,
     bm25_search_tool,
     get_document_tool,
     list_documents_tool,
-    get_entity_relationships_tool,
-    get_entity_timeline_tool,
     VectorSearchInput,
-    GraphSearchInput,
-    HybridSearchInput,
+    # HybridSearchInput,
     BM25SearchInput,
     DocumentInput,
     DocumentListInput,
-    EntityRelationshipInput,
-    EntityTimelineInput
 )
 
 # Load environment variables
 load_dotenv()
 
 logger = logging.getLogger(__name__)
+
+# Enable Langfuse instrumentation for automatic tracing
+Agent.instrument_all()
 
 
 @dataclass
@@ -57,7 +53,8 @@ class AgentDependencies:
 rag_agent = Agent(
     get_llm_model(),
     deps_type=AgentDependencies,
-    system_prompt=SYSTEM_PROMPT
+    system_prompt=SYSTEM_PROMPT,
+    instrument=True,
 )
 
 
@@ -175,51 +172,6 @@ async def bm25_search(
 #         }
 #         for r in results
 #     ]
-
-
-@rag_agent.tool
-async def hybrid_search(
-    ctx: RunContext[AgentDependencies],
-    query: str,
-    limit: int = 10,
-    text_weight: float = 0.3
-) -> List[Dict[str, Any]]:
-    """
-    Perform hybrid search combining semantic vector and BM25 lexical search.
-
-    This tool combines semantic similarity search (embeddings) with BM25 keyword matching
-    for comprehensive results. It ranks results using both approaches and provides
-    the best coverage. Best for queries that benefit from both semantic understanding
-    and exact keyword matching.
-
-    Args:
-        query: Search query for hybrid search
-        limit: Maximum number of results to return (1-50)
-        text_weight: Weight for BM25 vs vector similarity (0.0-1.0, default 0.3)
-
-    Returns:
-        List of chunks ranked by combined relevance score
-    """
-    input_data = HybridSearchInput(
-        query=query,
-        limit=limit,
-        text_weight=text_weight
-    )
-
-    results = await hybrid_search_tool(input_data)
-
-    # Convert results to dict for agent
-    return [
-        {
-            "content": r.content,
-            "score": r.score,
-            "document_title": r.document_title,
-            "document_source": r.document_source,
-            "chunk_id": r.chunk_id
-        }
-        for r in results
-    ]
-
 
 @rag_agent.tool
 async def get_document(

@@ -50,16 +50,28 @@ This project builds an AI agent system that combines traditional RAG (Retrieval 
 - **graph_builder.py**: Knowledge graph construction from documents
 - **cleaner.py**: Database cleanup utilities
 
-### 3. Database Schema (`/sql`)
+### 3. Observability System (Langfuse + Pydantic AI)
+- **Automatic Instrumentation**: Uses `Agent.instrument_all()` for zero-config tracing
+- **config.py**: Centralized configuration management for all services
+- **Tracking Capabilities** (Automatic):
+  - Agent runs and decision-making processes
+  - Tool calls with parameters and results
+  - LLM generations with token usage and costs
+  - Session tracking via `@observe()` decorator in API
+- **Self-Hosted**: Langfuse runs in Docker containers alongside the application
+- **Simple Integration**: Just set environment variables - no custom code needed
+
+### 4. Database Schema (`/sql`)
 - **schema.sql**: PostgreSQL schema with pgvector
 - **migrations/**: Database migration scripts
 
-### 4. Tests (`/tests`)
+### 5. Tests (`/tests`)
 - Comprehensive unit and integration tests
 - Mocked external dependencies
 - Test fixtures and utilities
+- **test_observability.py**: Tests for Langfuse tracing integration
 
-### 5. CLI Interface (`/cli.py`)
+### 6. CLI Interface (`/cli.py`)
 - Interactive command-line interface for the agent
 - Real-time streaming with Server-Sent Events
 - Tool usage visibility showing agent reasoning
@@ -73,6 +85,8 @@ This project builds an AI agent system that combines traditional RAG (Retrieval 
 - **FastAPI**: API framework
 - **PostgreSQL + pgvector**: Vector database
 - **Neo4j + Graphiti**: Knowledge graph
+- **Langfuse**: Self-hosted LLM observability platform
+- **Docker Compose**: Container orchestration for services
 - **Flexible LLM Providers**: OpenAI, Ollama, OpenRouter, Gemini
 
 ### Key Libraries
@@ -81,6 +95,8 @@ This project builds an AI agent system that combines traditional RAG (Retrieval 
 - **python-dotenv**: Environment management
 - **pytest + pytest-asyncio**: Testing
 - **black + ruff**: Code formatting/linting
+- **langfuse**: Observability SDK
+- **pydantic-settings**: Configuration management
 
 ## Design Principles
 
@@ -181,7 +197,7 @@ This project builds an AI agent system that combines traditional RAG (Retrieval 
 ### Environment Variables
 ```bash
 # Database
-DATABASE_URL=postgresql://user:password@localhost:5432/agentic_rag
+DATABASE_URL=postgresql://user:password@localhost:5433/agentic_rag
 NEO4J_URI=bolt://localhost:7687
 NEO4J_USER=neo4j
 NEO4J_PASSWORD=your_password

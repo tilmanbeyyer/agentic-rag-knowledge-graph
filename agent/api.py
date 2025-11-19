@@ -3,7 +3,6 @@ FastAPI endpoints for the agentic RAG system.
 """
 
 import os
-import asyncio
 import json
 import logging
 from contextlib import asynccontextmanager
@@ -11,12 +10,13 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 import uuid
 
-from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 import uvicorn
 from dotenv import load_dotenv
+from langfuse import observe, propagate_attributes
 
 from .agent import rag_agent, AgentDependencies
 from .db_utils import (
@@ -28,27 +28,26 @@ from .db_utils import (
     get_session_messages,
     test_connection
 )
-from .graph_utils import initialize_graph, close_graph, test_graph_connection
+from .graph_utils import initialize_graph, close_graph
 from .models import (
     ChatRequest,
     ChatResponse,
     SearchRequest,
     SearchResponse,
-    StreamDelta,
     ErrorResponse,
     HealthStatus,
     ToolCall
 )
 from .tools import (
     vector_search_tool,
-    graph_search_tool,
-    hybrid_search_tool,
+    # hybrid_search_tool,
     list_documents_tool,
     VectorSearchInput,
-    GraphSearchInput,
     HybridSearchInput,
     DocumentListInput
 )
+
+from langfuse import get_client
 
 # Load environment variables
 load_dotenv()
@@ -82,6 +81,14 @@ async def lifespan(app: FastAPI):
         # Initialize database connections
         await initialize_database()
         logger.info("Database initialized")
+ 
+        langfuse_client = get_client()
+ 
+        # Verify connection
+        if langfuse_client.auth_check():
+            logger.info("Langfuse client is authenticated and ready!")
+        else:
+            logger.info("Authentication failed. Please check your credentials and host.")
         
         # Initialize graph database
         # await initialize_graph()
@@ -388,19 +395,26 @@ async def health_check():
 
 
 @app.post("/chat", response_model=ChatResponse)
+@observe()
 async def chat(request: ChatRequest):
     """Non-streaming chat endpoint."""
     try:
         # Get or create session
         session_id = await get_or_create_session(request)
-        
-        # Execute agent
-        response, tools_used = await execute_agent(
-            message=request.message,
+
+        # Add session and user tracking to Langfuse trace
+        with propagate_attributes(
             session_id=session_id,
-            user_id=request.user_id
-        )
-        
+            user_id=request.user_id or "anonymous",
+            tags=["chat", "non-streaming"]
+        ):
+            # Execute agent
+            response, tools_used = await execute_agent(
+                message=request.message,
+                session_id=session_id,
+                user_id=request.user_id
+            )
+
         return ChatResponse(
             message=response,
             session_id=session_id,

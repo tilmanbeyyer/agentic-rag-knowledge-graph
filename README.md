@@ -1,8 +1,3 @@
-PROMPT:
-We want to add https://github.com/xhluca/bm25s to our search agent @agent/agent.py and @agent/prompts.py to make our rag search 
-better. Please use the bm25s to search the documents. I do not know what works best using the existing database or create a new 
-resembles of the document in the documents folder. Make sure to activate the venv venv/bin/activate before using any python commands.
-
 # Agentic RAG with Knowledge Graph
 
 Agentic knowledge retrieval redefined with an AI agent system that combines traditional RAG (vector search) with knowledge graph capabilities to analyze and provide insights about big tech companies and their AI initiatives. The system uses PostgreSQL with pgvector for semantic search and Neo4j with Graphiti for temporal knowledge graphs. The goal is to create Agentic RAG at its finest.
@@ -128,6 +123,59 @@ LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta
 LLM_API_KEY=your-gemini-key
 LLM_CHOICE=gemini-2.5-flash
 ```
+
+### 6. Set up Langfuse for Observability (Optional but Recommended)
+
+Langfuse provides comprehensive observability for your AI agent, automatically tracking:
+- Agent runs and decisions
+- Tool calls and search performance
+- LLM token usage and costs
+- Error rates and debugging information
+
+**Integration is fully automatic** - Pydantic AI's `Agent.instrument_all()` handles all tracing.
+
+#### Start Langfuse with Docker Compose
+
+The project includes a self-hosted Langfuse setup in `docker-compose.yml`:
+
+```bash
+# Start Langfuse services (database, web, and worker)
+docker compose up -d langfuse-db langfuse-web langfuse-worker
+
+# Verify services are running
+docker compose ps
+
+# View logs
+docker compose logs -f langfuse-web
+```
+
+Wait for the langfuse-web container to log "Ready" (approximately 2-3 minutes on first start).
+
+#### Configure Langfuse
+
+1. Open http://localhost:3000 in your browser
+2. Create an account (first user becomes admin)
+3. Create a new project (e.g., "agentic-rag")
+4. Navigate to **Settings → API Keys**
+5. Generate a new API key pair (Public Key and Secret Key)
+6. Add the keys to your `.env` file:
+
+```bash
+# Langfuse Observability Configuration
+LANGFUSE_PUBLIC_KEY=pk-lf-your-public-key-here
+LANGFUSE_SECRET_KEY=sk-lf-your-secret-key-here
+LANGFUSE_HOST=http://localhost:3000
+```
+
+#### Viewing Traces
+
+Once configured, all agent interactions will be **automatically traced**:
+- Visit http://localhost:3000 to view the Langfuse dashboard
+- Browse **Traces** to see individual agent runs with tool calls
+- Check **Sessions** for conversation threads
+- Analyze **Metrics** for token usage and performance insights
+
+No code changes needed - tracing happens automatically!
 
 ## Quick Start
 

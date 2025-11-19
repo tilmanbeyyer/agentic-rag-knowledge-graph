@@ -40,6 +40,7 @@ importlib_metadata==8.7.0
 iniconfig==2.1.0
 jiter==0.10.0
 jmespath==1.0.1
+langfuse==2.59.1
 logfire-api==3.21.1
 markdown-it-py==3.0.0
 mcp==1.9.4
