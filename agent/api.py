@@ -395,6 +395,7 @@ async def health_check():
 
 
 @app.post("/chat", response_model=ChatResponse)
+@observe(capture_input=True, capture_output=True)
 async def chat(request: ChatRequest):
     """Non-streaming chat endpoint."""
     try:
